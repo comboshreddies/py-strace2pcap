@@ -161,8 +161,7 @@ def sorted_tcpip_params(syscall, net_info):
     (first_ip,first_port,second_ip,second_port) = parse_tcpip(net_info)
     if  syscall in syscalls_out :
         return [first_ip,first_port,second_ip,second_port]
-    else :
-        return [second_ip,second_port,first_ip,first_port]
+    return [second_ip,second_port,first_ip,first_port]
 
 def bytes_code_payload(line_payload):
     """ convert payload to bytes code """
