@@ -14,7 +14,7 @@ pip3 install -r requirements.txt
 ```console
 strace -f -s65535 -o /tmp/straceSample -tt -T -yy -xx command
 ```
-3) start conversion from stract to pcap
+3) start conversion from strace to pcap
 ```console
 py-strace2pcap.py file_to_store.pcap < /tmp/straceSample
 ```
