@@ -223,7 +223,8 @@ def generate_sequence(c):
 
 def generate_sequence_key(c):
     """ generate sequence_key """
-    return  f"{c['source_ip']}:{c['source_port']}_{c['destination_ip']}:{c['destination_port']}_{c['pid']}:{c['fd']}{c['session']}"
+    return  f"{c['source_ip']}:{c['source_port']}_{c['destination_ip']}:\
+        {c['destination_port']}_{c['pid']}:{c['fd']}{c['session']}"
 
 def generate_tcp_packet(src_mac,dst_mac,p):
     """ generate tcp packet """
@@ -233,7 +234,8 @@ def generate_tcp_packet(src_mac,dst_mac,p):
         sequence[seq_key] = generate_sequence(p)
     tcp_packet = Ether(src=src_mac, dst=dst_mac) / \
         IP(src=p['source_ip'], dst=p['destination_ip']) / \
-        TCP(flags='PA', sport=p['source_port'], dport=p['destination_port'], seq=sequence[seq_key]) / \
+        TCP(flags='PA', sport=p['source_port'], dport=p['destination_port'], \
+            seq=sequence[seq_key]) / \
         p['payload']
     if seq_key in sequence:
         sequence[seq_key]+=len(p['payload'])
@@ -252,7 +254,8 @@ def generate_pcap_packet(c):
         # encode pid to source mac
         source_mac = encode_decimal2mac(c['pid'])
         # encode fd, operation and session
-        destination_mac = encode_decimal2mac(c['fd']+10000000000*op_encode[c['syscall']]+10000000*c['session'])
+        destination_mac = encode_decimal2mac(c['fd']+10000000000* \
+            op_encode[c['syscall']]+10000000*c['session'])
         if c['protocol'] == "TCP" :
             return generate_tcp_packet(source_mac, destination_mac, c)
         if c['protocol'] == "UDP" :
