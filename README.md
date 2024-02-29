@@ -16,7 +16,7 @@ strace -f -s65535 -o /tmp/straceSample -tt -T -yy -xx command
 ```
 3) start conversion from stract to pcap
 ```console
-strace2pcap.py file_to_store.pcap < /tmp/straceSample
+py-strace2pcap.py file_to_store.pcap < /tmp/straceSample
 ```
 4) read network traffic from strace with wireshark, tshark, or tcpdump
 ```console
