@@ -21,5 +21,5 @@ strace2pcap.py file_to_store.pcap < /tmp/straceSample
 4) read network traffic from strace with wireshark, tshark, or tcpdump
 ```console
 wireshark file_to_store.pcap
-"""
+'''
 
