@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """ tool for converting strace format to synthetic pcap
     1) pip3 install scapy
-    2) strace -f -s65535 -o /tmp/straceSample -tt -T -yy -xx command
+    2) strace -f -s65535 -o /tmp/straceSample -ttt -T -yy -xx command
     3) py_strace2pcap.py file_to_store.pcap < /tmp/straceSample
     4) wireshark file_to_store.pcap """
 
@@ -42,7 +42,7 @@ def encode_decimal2mac(enc):
     mac3 = int(enc / 1000000) % 100
     mac2 = int(enc / 100000000) % 100
     mac1 = int(enc / 10000000000)
-    return f"{mac1:#04x}:{mac2:#04x}:{mac3:#04x}:{mac4:#04x}:{mac5:#04x}:{mac6:#04x}"
+    return f"{mac1:#02d}:{mac2:#02d}:{mac3:#02d}:{mac4:#02d}:{mac5:#02d}:{mac6:#02d}"
 
 def is_stop_or_signal_line(line_args):
     """ is this line with exit and signals """
@@ -262,9 +262,13 @@ def generate_pcap_packet(c):
         destination_mac = encode_decimal2mac(c['fd']+10000000000* \
             op_encode[c['syscall']]+10000000*c['session'])
         if c['protocol'] == "TCP" :
-            return generate_tcp_packet(source_mac, destination_mac, c)
+            packet = generate_tcp_packet(source_mac, destination_mac, c)
+           packet.time = float(c['time']) 
+            return packet
         if c['protocol'] == "UDP" :
-            return generate_udp_packet(source_mac, destination_mac, c)
+            packet = generate_udp_packet(source_mac, destination_mac, c)
+            packet.time = float(c['time'])
+            return packet
     return False
 
 

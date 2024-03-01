@@ -15,7 +15,7 @@ pip3 install -r requirements.txt
 ```
 2) start strace
 ```console
-strace -f -s65535 -o /tmp/straceSample -tt -T -yy -xx command
+strace -f -s65535 -o /tmp/straceSample -ttt -T -yy -xx command
 ```
 3) start conversion from strace to pcap
 ```console
