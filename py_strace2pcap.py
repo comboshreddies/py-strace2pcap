@@ -263,7 +263,7 @@ def generate_pcap_packet(c):
             op_encode[c['syscall']]+10000000*c['session'])
         if c['protocol'] == "TCP" :
             packet = generate_tcp_packet(source_mac, destination_mac, c)
-           packet.time = float(c['time']) 
+            packet.time = float(c['time']) 
             return packet
         if c['protocol'] == "UDP" :
             packet = generate_udp_packet(source_mac, destination_mac, c)
