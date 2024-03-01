@@ -129,7 +129,7 @@ def filter_and_reconstruct_line(parse_line):
     if is_resumed(args) :
         return reconstruct_resumed(pid, args)
 
-    return new_line 
+    return new_line
 
 def get_payload_chunk(syscall,args):
     """ scape payload from multiple payload strace encodings """
@@ -278,7 +278,6 @@ if __name__ == '__main__' :
     pktdump = PcapWriter(sys.argv[1], append=True, sync=True)
 
     for line in sys.stdin :
-        
         packet = generate_pcap_packet(parse_strace_line(line))
         if packet :
             pktdump.write(packet)

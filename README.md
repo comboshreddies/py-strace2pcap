@@ -38,7 +38,7 @@ wireshark ./example/straceSample.pcap  -d tcp.port==27017,mongo
 
 # known issues
 1) strace version 6 (tested on gentoo with version 6.6) might return strace format with two blank spaces following pid,
-that will break formating (will fix in code). 
+that will break formating (fixed in code). 
 
 # reporting issues
 please send strace command you've used and strace output
