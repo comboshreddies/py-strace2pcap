@@ -1,6 +1,9 @@
 # py_strace2pcap
 convert specific strace output file to pcap using scapy
 
+![example wireshark](https://github.com/comboshreddies/py-strace2pcap/blob/main/images/mongo_find.png?raw=true)
+
+
 # setup
 1) install needed python module
 ```console
