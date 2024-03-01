@@ -29,8 +29,8 @@ wireshark file_to_store.pcap
 # helpers
 1) there is example straceSample in example directory, along with example straceSample.pcap
 
-2) when protocol is not recognozed, do use decode packet on tcp payload (check screenshots in images directory)
-or specify dissector in commandline while running tshark or wireshark
+2) when protocol is not recognized in wireshark/tshark, do use decode packet on tcp payload (check screenshots in images directory)
+or specify dissector in commandline while running tshark/wireshark
 example below is for mongo protocol
 ```console
 wireshark ./example/straceSample.pcap  -d tcp.port==27017,mongo 
