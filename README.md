@@ -23,3 +23,17 @@ py_strace2pcap.py file_to_store.pcap < /tmp/straceSample
 wireshark file_to_store.pcap
 ```
 
+# helpers
+1) there is example straceSample in example directory, along with example straceSample.pcap
+
+2) when protocol is not recognozed, do use decode packet on tcp payload (check screenshots in images directory)
+or specify dissector in commandline while running tshark or wireshark
+example below is for mongo protocol
+```console
+wireshark ./example/straceSample.pcap  -d tcp.port==27017,mongo 
+```
+
+# known issues
+1) strace version 6 (tested on gentoo with version 6.6) might return strace format with two blank spaces following pid,
+that will break formating (will fix in code). Please report formating issue.
+

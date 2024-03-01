@@ -57,7 +57,7 @@ def is_unwanted_resumed_syscall(args):
     return False
 
 def is_unwanted_syscall(args):
-    """ skip unwanted syscalls, arg3 syscall """
+    """ skip unwanted syscalls, arg2 syscall """
     syscall =  args[2].split('(')[0]
     if args[2] != '<...' and not syscall in syscalls_all :
         return True
@@ -76,7 +76,7 @@ def is_unwanted_protocol(line_args):
     if len(line_args[2].split('<')) > 1 :
         protocol = line_args[2].split('<')[1].split(':')[0]
         # do not prase unwanted protocols
-        if line_args[2] != '<...' and not protocol in protocols:
+        if line_args[2] != '<...' and not protocol in protocols :
             return True
     return False
 
@@ -107,13 +107,18 @@ def reconstruct_resumed(pid, args):
 def filter_and_reconstruct_line(parse_line):
     """ filter non wanted lines, reconstruct resumed, or return wanted lines """
     args = parse_line.split(' ')
+    if args[1]  :
+        new_line = parse_line
+    else : # strace version 6 put 2 blanks after pid
+        del args[1]
+        new_line = ' '.join(args)
     pid = int(args[0])
     syscall = args[2].split('(')[0]
 
     if is_stop_or_signal_line(args) or \
        is_unwanted_resumed_syscall(args) or \
        is_unwanted_syscall(args) or \
-       is_error_return_code(parse_line) or \
+       is_error_return_code(new_line) or \
        is_unwanted_protocol(args) :
         return False
 
@@ -124,7 +129,7 @@ def filter_and_reconstruct_line(parse_line):
     if is_resumed(args) :
         return reconstruct_resumed(pid, args)
 
-    return parse_line
+    return new_line 
 
 def get_payload_chunk(syscall,args):
     """ scape payload from multiple payload strace encodings """
@@ -229,7 +234,7 @@ def generate_sequence_key(c):
 def generate_tcp_packet(src_mac,dst_mac,p):
     """ generate tcp packet """
     seq_key = generate_sequence_key(p)
-    if not seq_key in sequence:
+    if not seq_key in sequence :
         # encode sequence with fd, pid, and session
         sequence[seq_key] = generate_sequence(p)
     tcp_packet = Ether(src=src_mac, dst=dst_mac) / \
@@ -237,7 +242,7 @@ def generate_tcp_packet(src_mac,dst_mac,p):
         TCP(flags='PA', sport=p['source_port'], dport=p['destination_port'], \
             seq=sequence[seq_key]) / \
         p['payload']
-    if seq_key in sequence:
+    if seq_key in sequence :
         sequence[seq_key]+=len(p['payload'])
     return tcp_packet
 
@@ -263,7 +268,7 @@ def generate_pcap_packet(c):
     return False
 
 
-if __name__ == '__main__':
+if __name__ == '__main__' :
     import sys
 
     if len(sys.argv) != 2 :
@@ -272,7 +277,8 @@ if __name__ == '__main__':
 
     pktdump = PcapWriter(sys.argv[1], append=True, sync=True)
 
-    for line in sys.stdin:
+    for line in sys.stdin :
+        
         packet = generate_pcap_packet(parse_strace_line(line))
         if packet :
             pktdump.write(packet)
