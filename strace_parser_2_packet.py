@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """ parse strace line to parsed dict items result """
 
 from scapy.all import Ether, IP, TCP, UDP

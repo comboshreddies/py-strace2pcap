@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """ strace -yy -tt -xx -T parser """
 
 class FileDescriptorTracker():

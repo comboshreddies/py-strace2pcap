@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """ stream cascade processor """
 
 class ProcessCascade(object):
