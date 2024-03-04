@@ -2,11 +2,11 @@
 
 class ProcessCascade(object):
     """ strace line parser generator """
-    def __init__(self, parser, in_stream):
+    def __init__(self, processor, in_stream):
         if not ( hasattr(in_stream, '__next__') and callable(in_stream.__next__) ) :
             raise ValueError('invalid input')
         self.input = in_stream
-        self.processor = parser()
+        self.processor = processor()
 
     def __iter__(self):
         return self
