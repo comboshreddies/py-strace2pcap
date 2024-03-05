@@ -1,4 +1,4 @@
-""" strace -yy -tt -xx -T parser """
+""" strace -yy -ttt -xx -T parser """
 
 class FileDescriptorTracker():
     """ pid-fd tracker helper class """

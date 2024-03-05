@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """ tool for converting strace format to synthetic pcap
     1) pip3 install scapy
-    2) strace -f -s65535 -o /tmp/straceSample -tt -T -yy command
-    3) strace2pcap.py file_to_store.pcap < /tmp/straceSample
+    2) strace -f -s65535 -o /tmp/straceSample -ttt -T -yy command
+    3) py_strace2pcap.py file_to_store.pcap < /tmp/straceSample
     4) wireshark file_to_store.pcap """
 
 
