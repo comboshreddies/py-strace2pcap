@@ -23,7 +23,7 @@ class StraceParser2Packet():
         mac3 = int(enc / 1000000) % 100
         mac2 = int(enc / 100000000) % 100
         mac1 = int(enc / 10000000000)
-        return f"{mac1:#04x}:{mac2:#04x}:{mac3:#04x}:{mac4:#04x}:{mac5:#04x}:{mac6:#04x}"
+        return f"{mac1:#02d}:{mac2:#02d}:{mac3:#02d}:{mac4:#02d}:{mac5:#02d}:{mac6:#02d}"
 
     def generate_sequence(self, c):
         """ generate sequence """
@@ -61,8 +61,8 @@ class StraceParser2Packet():
             # encode pid to source mac
             source_mac = self.encode_decimal2mac(c['pid'])
             # encode fd, operation and session
-            destination_mac = self.encode_decimal2mac(c['fd']+10000000000* \
-                self.op_encode[c['syscall']]+10000000*c['session'])
+            destination_mac = self.encode_decimal2mac(c['fd']*1000000+10000000000* \
+                self.op_encode[c['syscall']]+c['session'])
             if c['protocol'] == "TCP" :
                 return self.generate_tcp_packet(source_mac, destination_mac, c)
             if c['protocol'] == "UDP" :

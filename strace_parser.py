@@ -39,7 +39,6 @@ class UnfinishedResume():
             return new_line
         return False
 
-
 class StraceParser():
     """ strace parser class """
     fd_track = FileDescriptorTracker()
@@ -55,6 +54,7 @@ class StraceParser():
     syscalls_format['state'] = ['close', 'shutdown']
     syscalls_out=['write', 'sendto', 'sendmsg']
     syscalls_in=['read', 'recvfrom', 'recvmsg']
+    syscalls_broken=['sendto']
 
     # there are more E-messages
     nop_results = ['EAGAIN','EINPROGRESS','EBADF']
@@ -147,7 +147,7 @@ class StraceParser():
                 payload += chunks[segment]
         return payload
 
-    def parse_tcpip(self, tcpip_chunk):
+    def parse_tcpip(self, tcpip_chunk, syscall, args):
         """ from strace fd part that has tcpip content, parse src/dst ip/port
             content may be srcip:srcport->dstip:dstport or
             number, and if it's a number, we return 127.0.0.x """
@@ -157,15 +157,32 @@ class StraceParser():
             second_ip = tcpip_chunk.split('>')[1].split(':')[0]
             second_port = int(tcpip_chunk.split('>')[1].split(':')[1])
         else :
+            # set fake tcpip data, as real tcpip is partial or missing
             first_ip = '127.0.0.1'
             first_port = 11111
             second_ip = '127.0.0.2'
             second_port = 22222
+            if syscall in self.syscalls_broken :
+                reconstruct_line = ' '.join(args)
+                brace_section = reconstruct_line.split('{')
+                if not len(brace_section) > 1 :
+                    return False
+                sockaddr_part = brace_section[1].split('}')[0]
+                second_port = int(sockaddr_part.split('sin_port=htons(')[1].split(')')[0])
+                second_ip_hex = sockaddr_part.split('sin_addr=inet_addr("')[1].split('"')[0]
+                second_ip = ""
+                for i in ",0x".join(second_ip_hex.split('\\x'))[1:].split(',') :
+                    second_ip += chr(int(i,16))
+                # on close we could recollect source port
+                # but we have to track all previous usage of this pid-fd
         return [first_ip,first_port,second_ip,second_port]
 
-    def sorted_tcpip_params(self, syscall, net_info):
+    def sorted_tcpip_params(self, syscall, net_info, args):
         """ parse tcpip and put in right order src/dst for pcap """
-        (first_ip,first_port,second_ip,second_port) = self.parse_tcpip(net_info)
+        parsed_tcpip = self.parse_tcpip(net_info, syscall, args)
+        if not  parsed_tcpip :
+            return False
+        (first_ip,first_port,second_ip,second_port) = parsed_tcpip
         if  syscall in self.syscalls_out :
             return [first_ip,first_port,second_ip,second_port]
         else :
@@ -205,9 +222,12 @@ class StraceParser():
 
         # parase ip address encoded in strace fd argument
         net_info = args[2].split('[')[1].split(']')[0]
+        net_parse = self.sorted_tcpip_params(parsed['syscall'], net_info, args)
+        if not net_parse :
+            return False
+
         (parsed['source_ip'],parsed['source_port'],parsed['destination_ip'], \
-            parsed['destination_port']) = \
-                self.sorted_tcpip_params(parsed['syscall'],net_info)
+            parsed['destination_port']) = net_parse
 
         # start tracking first occurrence of pid-fd pair
         track_key = f"{parsed['pid']}-{parsed['fd']}"
@@ -216,6 +236,11 @@ class StraceParser():
         # if syscall is close, fd is closed, incrase fd_track for pid-fd key
         if parsed['syscall'] in self.syscalls_format['state'] :
             self.fd_track.increase(track_key)
+            # recollect partially coded udp
+            #if ':[' in args[2] and not '->' in args[2] :
+            #    src_tcpip = args[2].split('[')[1].split(']')[0]
+            #    src_port = src_tcpip.split(':')[1]
+            #    src_addr = src_tcpip.split(':')[0]
             return False
 
         # TCP session unique number, ie count of different connections with same pair pid-fd

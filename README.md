@@ -42,3 +42,10 @@ that will break formating (fixed in code).
 
 # reporting issues
 please send strace command you've used and strace output
+
+# todo:
+0) tool for strace -xx conversion to ascii payload (standard strace output)
+1) localhost comm
+2) UNIX-STREAM
+3) NETLINK
+
