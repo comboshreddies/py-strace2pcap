@@ -162,6 +162,7 @@ class StraceParser():
             first_port = 11111
             second_ip = '127.0.0.2'
             second_port = 22222
+            # in some cases, on some systemcalls, there is sockaddr at the end
             if syscall in self.syscalls_broken :
                 reconstruct_line = ' '.join(args)
                 brace_section = reconstruct_line.split('{')
@@ -173,7 +174,8 @@ class StraceParser():
                 second_ip = ""
                 for i in ",0x".join(second_ip_hex.split('\\x'))[1:].split(',') :
                     second_ip += chr(int(i,16))
-                # on close we could recollect source port
+                # in such cases, close might contain source port,
+                # so we could recollect it
                 # but we have to track all previous usage of this pid-fd
         return [first_ip,first_port,second_ip,second_port]
 
