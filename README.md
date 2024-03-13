@@ -1,5 +1,5 @@
 # py_strace2pcap
-convert specific strace output file to pcap using scapy
+convert specific strace output file to pcap using scapy python library
 
 ![example wireshark](https://github.com/comboshreddies/py-strace2pcap/blob/main/images/mongo_find.png?raw=true)
 
@@ -35,6 +35,8 @@ example below is for mongo protocol
 ```console
 wireshark ./example/straceSample.pcap  -d tcp.port==27017,mongo 
 ```
+3) if program observed with strace does too much operations, to add **-e trace=network** to strace command, to isolate just network traffic
+
 
 # known issues
 1) strace version 6 (tested on gentoo with version 6.6) might return strace format with two blank spaces following pid,
@@ -42,3 +44,10 @@ that will break formating (fixed in code).
 
 # reporting issues
 please send strace command you've used and strace output
+
+# todo:
+0) tool for strace -xx conversion to ascii payload (standard strace output)
+1) localhost comm
+2) UNIX-STREAM
+3) NETLINK
+
