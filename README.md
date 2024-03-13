@@ -35,7 +35,7 @@ example below is for mongo protocol
 ```console
 wireshark ./example/straceSample.pcap  -d tcp.port==27017,mongo 
 ```
-3) if program observed with strace does too much operations, to add **-e trace=network** to strace command, to isolate just network traffic
+3) if program observed with strace logs too much operations, and file becomes too large, to add **-e trace=network** to strace command, to isolate just network traffic
 
 
 # known issues
