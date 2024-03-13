@@ -1,6 +1,6 @@
 """ stream cascade processor """
 
-class ProcessCascade(object):
+class ProcessCascade():
     """ strace line parser generator """
     def __init__(self, processor, in_stream):
         if not ( hasattr(in_stream, '__next__') and callable(in_stream.__next__) ) :

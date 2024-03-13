@@ -187,8 +187,7 @@ class StraceParser():
         (first_ip,first_port,second_ip,second_port) = parsed_tcpip
         if  syscall in self.syscalls_out :
             return [first_ip,first_port,second_ip,second_port]
-        else :
-            return [second_ip,second_port,first_ip,first_port]
+        return [second_ip,second_port,first_ip,first_port]
 
     def bytes_code_payload(self, line_payload):
         """ convert payload to bytes code """
