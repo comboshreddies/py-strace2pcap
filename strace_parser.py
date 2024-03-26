@@ -109,7 +109,8 @@ class StraceParser():
         if args[1]  :
             new_line = parse_line
         else : # strace version 6 put 2 blanks after pid
-            del args[1]
+            while args[1] == '' :
+                del args[1]
         new_line = ' '.join(args)
 
         pid = int(args[0])
