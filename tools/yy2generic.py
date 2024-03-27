@@ -21,7 +21,7 @@ def convert(line) :
         for arg in args[1:] :
             chunks = arg.split('"')
             if len(chunks) > 0 :
-                new_line +=c hunks[0]
+                new_line += chunks[0]
                 for part in chunks[1:] :
                     new_line += '"'
                     if len(part) > 2 :
