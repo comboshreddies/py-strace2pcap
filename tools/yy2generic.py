@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
+""" tool for converting strace -xx format to ascii_oct, a generic format """
 
-def hex2asciiAndOct(hex_chunk) :
+def hex_2_ascii_and_oct(hex_chunk) :
+    """ helper function for decoding hex array to ascii or oct """
     generic = ""
     parts=hex_chunk.split('\\x')
     for part in parts[1:] :
@@ -13,7 +15,7 @@ def hex2asciiAndOct(hex_chunk) :
     return generic
 
 def convert(line) :
-    print("C -> " + line)
+    """ line format converter """
     args = line.split(' ')
     new_line = args[0]
     if len(args) > 1 :
@@ -26,9 +28,9 @@ def convert(line) :
                     new_line += '"'
                     if len(part) > 2 :
                         if not (part[0]=='\\' and part[1]=='x') :
-                            new_line += part 
+                            new_line += part
                         else:
-                            new_line +=  hex2asciiAndOct(part) 
+                            new_line +=  hex_2_ascii_and_oct(part)
             else :
                 new_line += " " + arg
             new_line += " "
@@ -56,6 +58,5 @@ if __name__ == '__main__':
     import sys
 
     for line in sys.stdin :
-        print("L ->" + line)
         print(convert(line[:-1]))
 
