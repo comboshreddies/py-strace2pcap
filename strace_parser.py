@@ -172,12 +172,15 @@ class StraceParser():
                 sockaddr_part = brace_section[1].split('}')[0]
                 second_port = int(sockaddr_part.split('sin_port=htons(')[1].split(')')[0])
                 second_ip_hex = sockaddr_part.split('sin_addr=inet_addr("')[1].split('"')[0]
-                second_ip = ""
-                for i in ",0x".join(second_ip_hex.split('\\x'))[1:].split(',') :
-                    second_ip += chr(int(i,16))
-                # in such cases, close might contain source port,
-                # so we could recollect it
-                # but we have to track all previous usage of this pid-fd
+                if second_ip_hex[0] == '\\' :
+                    second_ip = ""
+                    for i in ",0x".join(second_ip_hex.split('\\x'))[1:].split(',') :
+                        second_ip += chr(int(i,16))
+                    # in such cases, close might contain source port,
+                    # so we could recollect it
+                    # but we have to track all previous usage of this pid-fd
+                else :
+                    second_ip = second_ip_hex
         return [first_ip,first_port,second_ip,second_port]
 
     def sorted_tcpip_params(self, syscall, net_info, args):
