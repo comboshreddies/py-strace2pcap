@@ -14,9 +14,9 @@ def hex_2_ascii_and_oct(hex_chunk) :
         generic+=byte
     return generic
 
-def convert(line) :
+def convert(strace_line) :
     """ line format converter """
-    args = line.split(' ')
+    args = strace_line.split(' ')
     new_line = args[0]
     if len(args) > 1 :
         new_line += " "
@@ -41,7 +41,7 @@ def convert(line) :
         for arg in args[1:] :
             chunks = arg.split('>')
             if len(chunks[0])>2 and chunks[0][0]=='\\' and chunks[0][1]=='x' :
-                n2_line += hex2asciiAndOct(chunks[0])
+                n2_line += hex_2_ascii_and_oct(chunks[0])
             else:
                 n2_line += chunks[0]
             if len(chunks) > 0 :
@@ -59,4 +59,3 @@ if __name__ == '__main__':
 
     for line in sys.stdin :
         print(convert(line[:-1]))
-
