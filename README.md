@@ -21,6 +21,14 @@ strace -f -s65535 -o /tmp/straceSample -ttt -T -yy -xx command
 ```console
 py_strace2pcap.py file_to_store.pcap < /tmp/straceSample
 ```
+or if you like strace and converter as a pipe
+```console
+strace -f -s65535 -o /tmp/straceSample -ttt -T -yy -xx command | py_strace2pcap.py file_to_store.pcap
+```
+or if you want to attach pid do
+```console
+strace -f -s65535 -o /tmp/straceSample -ttt -T -yy -xx -p <pid> 2>&1 | grep -v Process\ |  py_strace2pcap.py file_to_store.pcap
+```
 4) read network traffic from strace with wireshark, tshark, or tcpdump
 ```console
 wireshark file_to_store.pcap
