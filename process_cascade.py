@@ -13,6 +13,8 @@ class ProcessCascade():
 
     def __next__(self):
         """ read next line from stream, until it's parsable """
+        if self.processor.has_split_cache() :
+            return self.processor.get_split_cache()
         new_chunk = self.input.__next__()
         while new_chunk :
             parsed = self.processor.process(new_chunk)
