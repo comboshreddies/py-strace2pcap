@@ -14,6 +14,19 @@ def hex_2_ascii_and_oct(hex_chunk) :
         generic+=byte
     return generic
 
+def convert_gt_part(chunks):
+    """ deeper part of conversion of < > section """
+    gt_part_line=""
+    for part in chunks[1:] :
+        gt_part_line += '"'
+        if len(part) > 2 :
+            if not (part[0]=='\\' and part[1]=='x') :
+                gt_part_line += part
+            else:
+                gt_part_line +=  hex_2_ascii_and_oct(part)
+    return gt_part_line
+
+
 def convert(strace_line) :
     """ line format converter """
     args = strace_line.split(' ')
@@ -24,13 +37,7 @@ def convert(strace_line) :
             chunks = arg.split('"')
             if len(chunks) > 0 :
                 new_line += chunks[0]
-                for part in chunks[1:] :
-                    new_line += '"'
-                    if len(part) > 2 :
-                        if not (part[0]=='\\' and part[1]=='x') :
-                            new_line += part
-                        else:
-                            new_line +=  hex_2_ascii_and_oct(part)
+                new_line += convert_gt_part(chunks)
             else :
                 new_line += " " + arg
             new_line += " "
