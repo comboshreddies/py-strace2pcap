@@ -1,8 +1,8 @@
-""" strace -yy -ttt -xx -T parser """
+""" strace -o /tmp/<file> -f -yy -ttt -xx -T parser """
 
 class FileDescriptorTracker():
     """ pid-fd tracker helper class """
-    fd_track={}
+    fd_track = {}
 
     def start_track(self, key):
         """ start tracking if not tracked """
@@ -27,11 +27,11 @@ class UnfinishedResume():
     unfinish_resume = {}
 
     def store_line(self, key, args):
-        """ store unfinished line """ 
+        """ store unfinished line """
         self.unfinish_resume[key] = ' '.join(args[:-2])
 
     def reconstruct_resumed(self, key, args):
-        """ return reconstructed unfinished/resumed line """ 
+        """ return reconstructed unfinished/resumed line """
         if key in self.unfinish_resume :
             # reconstruct strace line
             new_line = self.unfinish_resume[key] + '"' + ' '.join(args[4:])[9:]
@@ -58,6 +58,29 @@ class StraceParser():
 
     # there are more E-messages
     nop_results = ['EAGAIN','EINPROGRESS','EBADF']
+
+    split_cache_packet = {}
+    scapy_max_payload = 65480
+
+    def has_split_cache(self):
+        """ checks is there cached packet object """
+        if self.split_cache_packet :
+            return True
+        return False
+
+    def get_split_cache(self):
+        """ returns cached packet object """
+        full_payload = self.split_cache_packet['payload']
+        parsed = dict(self.split_cache_packet)
+        if len(full_payload) > self.scapy_max_payload :
+            parsed['payload'] = full_payload[:self.scapy_max_payload]
+            self.split_cache_packet = dict(parsed)
+            self.split_cache_packet['payload'] = full_payload[self.scapy_max_payload:]
+        else :
+            parsed['payload'] = full_payload
+            self.split_cache_packet = {}
+        return parsed
+
 
     def is_stop_or_signal_line(self, line_args):
         """ is this line with exit and signals """
@@ -252,7 +275,14 @@ class StraceParser():
         parsed['session'] = self.fd_track.get(track_key)
 
         payload = self.get_payload_chunk(parsed['syscall'], args)
-        parsed['payload'] = self.bytes_code_payload(payload)
+
+        full_payload = self.bytes_code_payload(payload)
+        if len(full_payload) > self.scapy_max_payload :
+            parsed['payload'] = full_payload[:self.scapy_max_payload]
+            self.split_cache_packet = dict(parsed)
+            self.split_cache_packet['payload'] = full_payload[self.scapy_max_payload:]
+        else :
+            parsed['payload'] = full_payload
 
         return parsed
 

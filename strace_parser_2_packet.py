@@ -1,6 +1,6 @@
 """ parse strace line to parsed dict items result """
 
-from scapy.all import Ether, IP, TCP, UDP
+from scapy.all import Ether, IP, TCP, UDP, Raw
 
 class StraceParser2Packet():
     """ Strace Parser to scapy Packet """
@@ -14,6 +14,10 @@ class StraceParser2Packet():
     op_encode['close'] = 7
 
     sequence = {}
+
+    def has_split_cache(self):
+        """ cheks is there split cache, but not implemented so False """
+        return False
 
     def encode_decimal2mac(self, enc):
         """ encode int to mac, we're econding pid , fd , steram and such """
@@ -43,7 +47,7 @@ class StraceParser2Packet():
             IP(src=p['source_ip'], dst=p['destination_ip']) / \
             TCP(flags='PA', sport=p['source_port'], dport=p['destination_port'], \
                 seq=self.sequence[seq_key]) / \
-            p['payload']
+            Raw(p['payload'])
         if seq_key in self.sequence:
             self.sequence[seq_key]+=len(p['payload'])
         return tcp_packet
@@ -53,7 +57,7 @@ class StraceParser2Packet():
         return Ether(src=src_mac, dst=dst_mac) / \
             IP(src=p['source_ip'], dst=p['destination_ip']) / \
             UDP(sport=p['source_port'], dport=p['destination_port']) / \
-            p['payload']
+            Raw(p['payload'])
 
     def generate_pcap_packet(self, c):
         """ from parsed content generate pcap packet """
