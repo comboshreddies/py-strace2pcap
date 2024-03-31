@@ -245,6 +245,11 @@ class StraceParser():
         parsed['pid'] = int(args[0])
         parsed['syscall'] = args[2].split('(')[0]
 
+        if parsed['syscall'] in self.syscalls_out :
+            parsed['direction_out'] = True
+        else :
+            parsed['direction_out'] = False
+
         parsed['fd'] = int(args[2].split('(')[1].split('<')[0])
         parsed['time'] = args[1]
 
@@ -283,7 +288,6 @@ class StraceParser():
             self.split_cache_packet['payload'] = full_payload[self.scapy_max_payload:]
         else :
             parsed['payload'] = full_payload
-
         return parsed
 
     def process(self, pline):
