@@ -39,11 +39,11 @@ wireshark ./example/straceSample.pcap  -d tcp.port==27017,mongo
 
 4) strace data encodings:
 
-* PID from strace file is encoded in eth.addr (src or dst depending on direction of packet), it is encoded as deciman within hex/byte of ethernet mac, so for PID 123456 you should see mac address 00:00:00:12:34:56
+* PID from strace file is encoded in eth.addr (src or dst depending on direction of a packet). PID is encoded as a decimal within hex/byte of ethernet mac, so for PID 123456 you should see mac address 00:00:00:12:34:56
 
 * FD (file descriptor) from strace is encoded in vlan ID (802.1q), for example FD 17 is encoded as VlanID 17
 
-* session (unique fd session) is encoded in other eth.add (src or dst) at lower part of mac starting from eth.addr[5]
+* session (unique fd session) is encoded in other eth.addr (src or dst, other than PID, depending on direction of a packet) at lower part of mac starting from eth.addr[5]
 
 * system call is encoded along with session on eth.addr[1]
    * read = 1
