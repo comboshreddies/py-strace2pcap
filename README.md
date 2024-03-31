@@ -53,7 +53,7 @@ wireshark ./example/straceSample.pcap  -d tcp.port==27017,mongo
    * recvfrom = 5
    * sendto = 6
 
-6) 
+example filter for PID 654321 and FD 7 : eth.addr == 00:00:00:65:43:21 && vlan.id == 7
 
 # known issues
 1) strace version 6 (tested on gentoo with version 6.6) might return strace format with two blank spaces following pid,
