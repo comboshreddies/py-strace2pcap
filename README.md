@@ -37,6 +37,23 @@ wireshark ./example/straceSample.pcap  -d tcp.port==27017,mongo
 ```
 3) if program observed with strace logs too much operations, and file becomes too large, to add **-e trace=network** to strace command, to isolate just network traffic
 
+4) strace data encodings:
+
+* PID from strace file is encoded in eth.addr (src or dst depending on direction of packet), it is encoded as deciman within hex/byte of ethernet mac, so for PID 123456 you should see mac address 00:00:00:12:34:56
+
+* FD (file descriptor) from strace is encoded in vlan ID (802.1q), for example FD 17 is encoded as VlanID 17
+
+* session (unique fd session) is encoded in other eth.add (src or dst) at lower part of mac starting from eth.addr[5]
+
+* system call is encoded along with session on eth.addr[1]
+   * read = 1
+   * write = 2
+   * sendmsg = 3
+   * recvmsg = 4
+   * recvfrom = 5
+   * sendto = 6
+
+6) 
 
 # known issues
 1) strace version 6 (tested on gentoo with version 6.6) might return strace format with two blank spaces following pid,
