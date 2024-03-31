@@ -246,7 +246,7 @@ class StraceParser():
         parsed['syscall'] = args[2].split('(')[0]
 
         if parsed['syscall'] in self.syscalls_out :
-            parsed['direction_out'] = True 
+            parsed['direction_out'] = True
         else :
             parsed['direction_out'] = False
 
