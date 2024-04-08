@@ -15,7 +15,11 @@ pip3 install -r requirements.txt
 ```
 2) start strace
 ```console
-strace -f -s65535 -o /tmp/straceSample -ttt -T -yy -xx command
+strace -f -s655350 -o /tmp/straceSample -ttt -T -yy -xx command
+```
+or
+``` console
+strace -f -s655350 -o /tmp/straceSample -ttt -T -yy -xx command
 ```
 3) start conversion from strace to pcap
 ```console
@@ -55,16 +59,10 @@ wireshark ./example/straceSample.pcap  -d tcp.port==27017,mongo
 
 example filter for PID 654321 and FD 7 : eth.addr == 00:00:00:65:43:21 && vlan.id == 7
 
-# known issues
-1) strace version 6 (tested on gentoo with version 6.6) might return strace format with two blank spaces following pid,
-that will break formating (fixed in code). 
-
 # reporting issues
 please send strace command you've used and strace output
 
 # todo:
-0) tool for strace -xx conversion to ascii payload (standard strace output)
-1) localhost comm
-2) UNIX-STREAM
-3) NETLINK
+0) UNIX-STREAM (fake tcp)
+1) NETLINK
 
