@@ -1,6 +1,6 @@
 """ parse strace line to parsed dict items result """
 
-from scapy.all import Ether, Dot1Q, IP, TCP, UDP, Raw
+from scapy.all import Ether, Dot1Q, IP, IPv6, TCP, UDP, Raw
 
 class StraceParser2Packet():
     """ Strace Parser to scapy Packet """
@@ -59,6 +59,27 @@ class StraceParser2Packet():
             UDP(sport=p['source_port'], dport=p['destination_port']) / \
             Raw(p['payload'])
 
+    def generate_tcp_packet_v6(self, src_mac, dst_mac, vlan, p):
+        """ generate tcp packet """
+        seq_key = self.generate_sequence_key(p)
+        if not seq_key in self.sequence :
+            self.sequence[seq_key] = self.generate_sequence(p)
+        tcp_packet = Ether(src=src_mac, dst=dst_mac) / Dot1Q(vlan=vlan) / \
+            IPv6(src=p['source_ip'], dst=p['destination_ip']) / \
+            TCP(flags='PA', sport=p['source_port'], dport=p['destination_port'], \
+                seq=self.sequence[seq_key]) / \
+            Raw(p['payload'])
+        if seq_key in self.sequence:
+            self.sequence[seq_key]+=len(p['payload'])
+        return tcp_packet
+
+    def generate_udp_packet_v6(self, src_mac, dst_mac, vlan, p):
+        """ generate udp packet """
+        return Ether(src=src_mac, dst=dst_mac) / Dot1Q(vlan=vlan) / \
+            IPv6(src=p['source_ip'], dst=p['destination_ip']) / \
+            UDP(sport=p['source_port'], dport=p['destination_port']) / \
+            Raw(p['payload'])
+
     def generate_pcap_packet(self, c):
         """ from parsed content generate pcap packet """
         if c :
@@ -79,6 +100,11 @@ class StraceParser2Packet():
                 return self.generate_tcp_packet(source_mac, destination_mac, fd_vlan, c)
             if c['protocol'] == "UDP" :
                 return self.generate_udp_packet(source_mac, destination_mac, fd_vlan, c)
+            if c['protocol'] == "TCPv6" :
+                return self.generate_tcp_packet_v6(source_mac, destination_mac, fd_vlan, c)
+            if c['protocol'] == "UDPv6" :
+                return self.generate_udp_packet_v6(source_mac, destination_mac, fd_vlan, c)
+
         return False
 
     def process(self, c):

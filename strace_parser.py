@@ -46,7 +46,9 @@ class StraceParser():
 
     syscalls_all = ['sendto', 'recvfrom', 'recvmsg', 'read',\
         'write', 'sendmsg', 'close', 'shutdown']
-    protocols = ['TCP', 'UDP']
+    protocols = ['TCP', 'UDP', 'TCPv6', 'UDPv6']
+    protocols_ipv6 = ['TCPv6', 'UDPv6']
+    protocols_ipv4 = ['TCP', 'UDP']
 
     syscalls_format = {}
     syscalls_format['single_chunk_payload'] = ['sendto', 'recvfrom', 'read', 'write']
@@ -171,7 +173,7 @@ class StraceParser():
                 payload += chunks[segment]
         return payload
 
-    def parse_tcpip(self, tcpip_chunk, syscall, args):
+    def parse_tcpip_v4(self, tcpip_chunk, syscall, args):
         """ from strace fd part that has tcpip content, parse src/dst ip/port
             content may be srcip:srcport->dstip:dstport or
             number, and if it's a number, we return 127.0.0.x """
@@ -206,9 +208,40 @@ class StraceParser():
                     second_ip = second_ip_hex
         return [first_ip,first_port,second_ip,second_port]
 
-    def sorted_tcpip_params(self, syscall, net_info, args):
+    def sorted_tcpip_v4_params(self, syscall, net_info, args):
         """ parse tcpip and put in right order src/dst for pcap """
-        parsed_tcpip = self.parse_tcpip(net_info, syscall, args)
+        parsed_tcpip = self.parse_tcpip_v4(net_info, syscall, args)
+        if not  parsed_tcpip :
+            return False
+        (first_ip,first_port,second_ip,second_port) = parsed_tcpip
+        if  syscall in self.syscalls_out :
+            return [first_ip,first_port,second_ip,second_port]
+        return [second_ip,second_port,first_ip,first_port]
+
+    def parse_tcpip_v6(self, tcpip_chunk):
+        """ from strace fd part that has tcpip content, parse src/dst ip/port
+            content may be srcip:srcport->dstip:dstport or
+            number, and if it's a number, we return 127.0.0.x """
+        if '->' in tcpip_chunk :
+            first_part = tcpip_chunk.split('->')[0][1:]
+            first_ip = first_part.split(']')[0]
+            first_port = int(first_part.split(':')[-1])
+            second_part = tcpip_chunk.split('->')[1][1:]
+            second_ip = second_part.split(']')[0]
+            second_port = int(second_part.split(':')[-1])
+        else :
+            # set fake tcpip data, as real tcpip is partial or missing
+            first_ip = '::ffff:127.0.0.1'
+            first_port = 11111
+            second_ip = '::ffff:127.0.0.2'
+            second_port = 22222
+            # in some cases, on some systemcalls, there is sockaddr at the end
+            # yet I do not have strace example of such
+        return [first_ip,first_port,second_ip,second_port]
+
+    def sorted_tcpip_v6_params(self, syscall, net_info):
+        """ parse tcpip and put in right order src/dst for pcap """
+        parsed_tcpip = self.parse_tcpip_v6(net_info)
         if not  parsed_tcpip :
             return False
         (first_ip,first_port,second_ip,second_port) = parsed_tcpip
@@ -223,7 +256,8 @@ class StraceParser():
         # from 0xAB coded payload, create bytes stored payload
         p=[]
         for i in hex_payload.split(',') :
-            p.append(int(i, 16))
+            if i :
+                p.append(int(i, 16))
         return bytes(p)
 
     def parse_strace_line(self, strace_line):
@@ -234,6 +268,7 @@ class StraceParser():
         if not unified_line :
             return False
 
+        print(strace_line)
         parsed = {}
         args = unified_line.split(' ')
 
@@ -254,8 +289,15 @@ class StraceParser():
         parsed['time'] = args[1]
 
         # parase ip address encoded in strace fd argument
-        net_info = args[2].split('[')[1].split(']')[0]
-        net_parse = self.sorted_tcpip_params(parsed['syscall'], net_info, args)
+#        net_info = args[2].split('[')[1].split(']')[-1]
+        net_info = ']'.join('['.join(args[2].split('[')[1:]).split(']')[0:-1])
+
+        net_parse = False
+        if parsed['protocol'] in self.protocols_ipv4 :
+            net_parse = self.sorted_tcpip_v4_params(parsed['syscall'], net_info, args)
+        if parsed['protocol'] in self.protocols_ipv6 :
+            net_parse = self.sorted_tcpip_v6_params(parsed['syscall'], net_info)
+
         if not net_parse :
             return False
 
