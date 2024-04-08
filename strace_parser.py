@@ -268,7 +268,6 @@ class StraceParser():
         if not unified_line :
             return False
 
-        print(strace_line)
         parsed = {}
         args = unified_line.split(' ')
 
