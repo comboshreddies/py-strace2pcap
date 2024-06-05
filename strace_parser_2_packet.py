@@ -31,7 +31,7 @@ class StraceParser2Packet():
 
     def generate_sequence(self, c):
         """ generate sequence """
-        return (c['fd']*100 + c['pid']*10000 + c['session']) % 4294967295
+        return (c['fd']*100 + c['pid']*10000 + c['session']) % 4294967296
 
     def generate_sequence_key(self, c):
         """ generate sequence_key """
@@ -70,7 +70,7 @@ class StraceParser2Packet():
                 seq=self.sequence[seq_key]) / \
             Raw(p['payload'])
         if seq_key in self.sequence:
-            self.sequence[seq_key]+=len(p['payload'])
+            self.sequence[seq_key]=(len(p['payload']) + self.sequence[seq_key]) % 4294967296
         return tcp_packet
 
     def generate_udp_packet_v6(self, src_mac, dst_mac, vlan, p):
