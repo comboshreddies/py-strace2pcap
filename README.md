@@ -82,7 +82,7 @@ example filter for PID 654321 and FD 7 : eth.addr == 00:00:00:65:43:21 && vlan.i
 
 5) if you like to see old and familiar, default, strace output, there is a tool in tools directory that will convert -xx format to generic format
 ``` console
-./tools/xx2generic.py < StraceOutFile_with_-xx > StraceOutFile_ascii_readable
+./tools/strace_convert/xx2generic.py < StraceOutFile_with_-xx > StraceOutFile_ascii_readable
 ```
 
 6) if you want to have a single command for catching just observed pid or command pcap file do use script that wraps strace execution:
@@ -103,6 +103,7 @@ note: to run ./strace2pcap.sh you will need scapy python module installed
 ``` console
 ./strace2pcap-pipe.sh /tmp/OUT2.pcap "curl http://www.github.com" | tcpdump -A -r -
 ```
+8) wireshark can't show more than 256 bytes of some protocol payload, for that reason I've created cli tshark based renders, so one can take payload of a protocl (like es query, or statsd message) from recorder strace, ie converted pcap file. look at tools/cli_tshark_protocol_render
 
 # reporting issues
 please send strace command you've used and strace output
