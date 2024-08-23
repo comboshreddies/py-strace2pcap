@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 tshark -r $1 -T pdml -Y 'tcp.port==9200'  |\
   grep   -e 'frame.time_epoch' -e 'tcp.payload' |\
   sed 's/.*"http.request.uri".* show="\(.*\)" value=.*/{"q":"\1"},/g' |\
