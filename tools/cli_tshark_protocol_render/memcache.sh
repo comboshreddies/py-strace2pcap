@@ -1,5 +1,8 @@
-#!/bin/sh
-tshark -r $1 -T pdml -Y 'tcp.port==11211'  |\
+#!/usr/bin/env sh
+
+FILE=$1
+
+tshark -r "$FILE" -T pdml -Y 'tcp.port==11211'  |\
   grep   -e 'frame.time_epoch' -e 'tcp.payload' |\
   sed 's/.*frame.time_epoch.*show="\([0123456789.]*\)".*/{"time": "\1"},/g' |\
   sed 's|.* value="\(.*\)"/>|\1,\n\r|g' |\

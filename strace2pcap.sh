@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env sh
 
 if [ $# -ne 2 ] ; then
   echo "$0 <pcap_file_path> \"command to execute or -p , ie strace arguments>\""
@@ -6,8 +6,8 @@ if [ $# -ne 2 ] ; then
   exit 1
 fi
 
-OUT_FILE="$1"
-STRACE_ARGS="$2"
+OUT_FILE=$1
+STRACE_ARGS=$2
 
 echo "import scapy" | python3
 ERR=$?
@@ -16,5 +16,5 @@ if [ $ERR -ne 0 ] ; then
    exit 2 
 fi
 
-strace -f -s655350 -o "! ./py_strace2pcap.py $OUT_FILE" -ttt -T -yy -xx -e trace=network  $STRACE_ARGS
+strace -f -s655350 -o "! ./py_strace2pcap.py $OUT_FILE" -ttt -T -yy -xx -e trace=network $STRACE_ARGS
 
