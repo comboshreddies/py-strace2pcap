@@ -1,8 +1,8 @@
-#!/bin/sh
+#!/usr/bin/env sh
 
 FILE=$1
 
-tshark -r $FILE -T pdml -Y 'tcp.port==27017' -d'tcp.port==27017,mongo' |\
+tshark -r "$FILE" -T pdml -Y 'tcp.port==27017' -d'tcp.port==27017,mongo' |\
   grep -e 'Transmission Contro' -e 'Internet Protocol'  -e 'frame.time_epoch' -e mongo.element.name -e mongo.element.value.string -e 'showname="ObjectID:' |\
   sed 's/.*frame.time_epoch.*show="\([0123456789.]*\)".*/time \1/g' |\
   sed 's/.*Internet Protocol Version 4, Src: \([0123456789.]*\), Dst: \([0123456789.]*\)" size.*/ip \1 \2/g' |\
