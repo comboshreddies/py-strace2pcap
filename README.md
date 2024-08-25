@@ -4,7 +4,7 @@ convert specific strace output file to pcap using scapy python library
 # idea behind:
 It would be great if strace could directly write pcap, but it's not that modular to support custom formating.
 It would be great if wireshark library could be safely used from strace module to produce pcap output, 
-but 3rd party usage of libwireshark is not encouraged.
+but 3rd party usage of libwireshark is not [encouraged](https://stackoverflow.com/questions/10308127/using-libwireshark-to-get-wireshark-functionality-programmatically).
 What is achievable is to make a tool that can read strace output file and generate pcap file - then one can read pcap with wireshark, tcpdump, tshark.
 
 # purpose :
