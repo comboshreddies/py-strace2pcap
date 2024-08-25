@@ -3,12 +3,14 @@ convert specific strace output file to pcap using scapy python library
 
 # idea behind:
 It would be great if strace could directly write pcap, but it's not that modular to support custom formating.
-It would be great if wireshark library could be safely used from strace module to format pcap, but 3rd party usage of libwireshar is not suggested.
-What is achievable is to make a tool that reads strace output and write to pcap, and then read pcap from wireshark or tcpdump.
+It would be great if wireshark library could be safely used from strace module to produce pcap output, 
+but 3rd party usage of libwireshark is not ![encouraged](https://stackoverflow.com/questions/10308127/using-libwireshark-to-get-wireshark-functionality-programmatically).
+What is achievable is to make a tool that can read strace output file and generate pcap file - then one can read pcap with wireshark, tcpdump, tshark.
 
 # purpose :
-I wanted to check some non encrypted traffic protocol that use binary encoding. It was production, process is already running. It was in namespace, and
-not the only process that is running in that namespace. I was able to strace process, I knew that I have all the bytes (above tcp layer), and I wanted
+I wanted to check some non encrypted traffic protocol that use binary encoding - it was not observable in ascii. 
+It was on production, process is already running. It was in namespace, and not the only process that is running in that namespace.
+I was able to strace the process, I knew that I have all the bytes (above tcp layer), and I wanted
 to dissect that with tshark to get details of communication. This tool is created for that purpose. 
 
 ![example wireshark](https://github.com/comboshreddies/py-strace2pcap/blob/main/images/mongo_find.png?raw=true)
@@ -24,18 +26,16 @@ or
 pip3 install -r requirements.txt
 ```
 
+note: you might want to use python venv if you don't want scappy installed globally
+
 # get strace file in specific format
 start strace
 ```console
 strace -f -s655350 -o /tmp/straceSample -ttt -T -yy -xx command
 ```
-or
+or for already running process
 ``` console
-strace -f -s655350 -o /tmp/straceSample -ttt -T -yy -xx command
-```
-or
-``` console
-strace -f -s655350 -o /tmp/straceSample -ttt -T -yy -xx -p <pid>
+strace -f -s655350 -o /tmp/straceSample -ttt -T -yy -xx -p <running_pid>
 ```
 
 # run py\_strace2pcap.py
@@ -59,7 +59,7 @@ texample below is for mongo protocol
 ```console
 wireshark ./example/straceSample.pcap  -d tcp.port==27017,mongo 
 ```
-3) if program observed with strace logs too much operations, and file becomes too large, 
+3) if program observed with strace logs too much operations, and file becomes too large 
 try to add **-e trace=network** to strace command, to isolate just network traffic
 
 4) strace data encodings in pcap:
@@ -103,6 +103,7 @@ note: to run ./strace2pcap.sh you will need scapy python module installed
 ``` console
 ./strace2pcap-pipe.sh /tmp/OUT2.pcap "curl http://www.github.com" | tcpdump -A -r -
 ```
+
 8) wireshark can't show more than 256 bytes of some protocol payload, for that reason I've created cli tshark based renders, so one can take payload of a protocl (like es query, or statsd message) from recorder strace, ie converted pcap file. look at tools/cli_tshark_protocol_render
 
 # reporting issues
