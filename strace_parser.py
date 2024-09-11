@@ -59,7 +59,7 @@ class StraceParser():
     syscalls_broken=['sendto']
 
     # there are more E-messages
-    nop_results = ['EAGAIN','EINPROGRESS','EBADF']
+    nop_results = ['EAGAIN','EINPROGRESS','EBADF','ECONNRESET']
 
     split_cache_packet = {}
     scapy_max_payload = 65480
@@ -267,7 +267,6 @@ class StraceParser():
         unified_line = self.filter_and_reconstruct_line(strace_line)
         if not unified_line :
             return False
-
         parsed = {}
         args = unified_line.split(' ')
 
@@ -288,7 +287,7 @@ class StraceParser():
         parsed['time'] = args[1]
 
         # parase ip address encoded in strace fd argument
-#        net_info = args[2].split('[')[1].split(']')[-1]
+        # net_info = args[2].split('[')[1].split(']')[-1]
         net_info = ']'.join('['.join(args[2].split('[')[1:]).split(']')[0:-1])
 
         net_parse = False
