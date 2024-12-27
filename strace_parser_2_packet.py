@@ -1,6 +1,8 @@
 """ parse strace line to parsed dict items result """
 
+
 from scapy.all import Ether, Dot1Q, IP, IPv6, TCP, UDP, Raw
+
 
 class StraceParser2Packet():
     """ Strace Parser to scapy Packet """
@@ -21,7 +23,7 @@ class StraceParser2Packet():
 
     def encode_decimal2mac(self, enc):
         """ encode int to mac, we're econding pid , fd , steram and such """
-        mac6 = (enc)%100
+        mac6 = (enc) % 100
         mac5 = int(enc / 100) % 100
         mac4 = int(enc / 10000) % 100
         mac3 = int(enc / 1000000) % 100
@@ -31,25 +33,27 @@ class StraceParser2Packet():
 
     def generate_sequence(self, c):
         """ generate sequence """
-        return (c['fd']*100 + c['pid']*10000 + c['session']) % 4294967296
+        return (c['fd'] * 100 + c['pid'] * 10000 + c['session']) % 4294967296
 
     def generate_sequence_key(self, c):
         """ generate sequence_key """
-        return  f"{c['source_ip']}:{c['source_port']}_{c['destination_ip']}: \
+        return f"{c['source_ip']}:{c['source_port']}_{c['destination_ip']}:\
             {c['destination_port']}_{c['pid']}:{c['fd']}{c['session']}"
 
     def generate_tcp_packet(self, src_mac, dst_mac, vlan, p):
         """ generate tcp packet """
         seq_key = self.generate_sequence_key(p)
-        if not seq_key in self.sequence :
+        if seq_key not in self.sequence:
             self.sequence[seq_key] = self.generate_sequence(p)
-        tcp_packet = Ether(src=src_mac, dst=dst_mac) / Dot1Q(vlan=vlan) / \
-            IP(src=p['source_ip'], dst=p['destination_ip']) / \
-            TCP(flags='PA', sport=p['source_port'], dport=p['destination_port'], \
-                seq=self.sequence[seq_key]) / \
-            Raw(p['payload'])
+        tcp_packet = (
+            Ether(src=src_mac, dst=dst_mac) / Dot1Q(vlan=vlan) /
+            IP(src=p['source_ip'], dst=p['destination_ip']) /
+            TCP(
+                flags='PA', sport=p['source_port'], dport=p['destination_port'],
+                seq=self.sequence[seq_key]) /
+            Raw(p['payload']))
         if seq_key in self.sequence:
-            self.sequence[seq_key]+=len(p['payload'])
+            self.sequence[seq_key] += len(p['payload'])
         return tcp_packet
 
     def generate_udp_packet(self, src_mac, dst_mac, vlan, p):
@@ -62,47 +66,49 @@ class StraceParser2Packet():
     def generate_tcp_packet_v6(self, src_mac, dst_mac, vlan, p):
         """ generate tcp packet """
         seq_key = self.generate_sequence_key(p)
-        if not seq_key in self.sequence :
+        if seq_key not in self.sequence:
             self.sequence[seq_key] = self.generate_sequence(p)
-        tcp_packet = Ether(src=src_mac, dst=dst_mac) / Dot1Q(vlan=vlan) / \
-            IPv6(src=p['source_ip'], dst=p['destination_ip']) / \
-            TCP(flags='PA', sport=p['source_port'], dport=p['destination_port'], \
-                seq=self.sequence[seq_key]) / \
-            Raw(p['payload'])
+        tcp_packet = (
+            Ether(src=src_mac, dst=dst_mac) / Dot1Q(vlan=vlan) /
+            IPv6(src=p['source_ip'], dst=p['destination_ip']) /
+            TCP(
+                flags='PA', sport=p['source_port'], dport=p['destination_port'],
+                seq=self.sequence[seq_key]) /
+            Raw(p['payload']))
         if seq_key in self.sequence:
-            self.sequence[seq_key]=(len(p['payload']) + self.sequence[seq_key]) % 4294967296
+            self.sequence[seq_key] = (len(p['payload']) + self.sequence[seq_key]) % 4294967296
         return tcp_packet
 
     def generate_udp_packet_v6(self, src_mac, dst_mac, vlan, p):
         """ generate udp packet """
-        return Ether(src=src_mac, dst=dst_mac) / Dot1Q(vlan=vlan) / \
-            IPv6(src=p['source_ip'], dst=p['destination_ip']) / \
-            UDP(sport=p['source_port'], dport=p['destination_port']) / \
-            Raw(p['payload'])
+        return (Ether(src=src_mac, dst=dst_mac) / Dot1Q(vlan=vlan) /
+                IPv6(src=p['source_ip'], dst=p['destination_ip']) /
+                UDP(sport=p['source_port'], dport=p['destination_port']) /
+                Raw(p['payload']))
 
     def generate_pcap_packet(self, c):
         """ from parsed content generate pcap packet """
-        if c :
-            if c['direction_out'] :
+        if c:
+            if c['direction_out']:
                 # encode pid to source mac
                 source_mac = self.encode_decimal2mac(c['pid'])
                 # encode fd, operation and session
-                destination_mac = self.encode_decimal2mac(100000000* \
-                    self.op_encode[c['syscall']]+c['session'])
-            else :
+                destination_mac = self.encode_decimal2mac(
+                    100000000 * self.op_encode[c['syscall']] + c['session'])
+            else:
                 # encode pid to destination mac
                 destination_mac = self.encode_decimal2mac(c['pid'])
                 # encode fd, operation and session
-                source_mac = self.encode_decimal2mac(100000000* \
-                    self.op_encode[c['syscall']]+c['session'])
+                source_mac = self.encode_decimal2mac(
+                    100000000 * self.op_encode[c['syscall']] + c['session'])
             fd_vlan = c['fd']
-            if c['protocol'] == "TCP" :
+            if c['protocol'] == "TCP":
                 return self.generate_tcp_packet(source_mac, destination_mac, fd_vlan, c)
-            if c['protocol'] == "UDP" :
+            if c['protocol'] == "UDP":
                 return self.generate_udp_packet(source_mac, destination_mac, fd_vlan, c)
-            if c['protocol'] == "TCPv6" :
+            if c['protocol'] == "TCPv6":
                 return self.generate_tcp_packet_v6(source_mac, destination_mac, fd_vlan, c)
-            if c['protocol'] == "UDPv6" :
+            if c['protocol'] == "UDPv6":
                 return self.generate_udp_packet_v6(source_mac, destination_mac, fd_vlan, c)
 
         return False
