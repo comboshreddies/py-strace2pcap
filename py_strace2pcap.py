@@ -11,14 +11,16 @@ from strace_parser import StraceParser
 from strace_parser_2_packet import StraceParser2Packet
 from process_cascade import ProcessCascade
 
+
 if __name__ == '__main__':
     import sys
 
-    if len(sys.argv) != 2 :
+    if len(sys.argv) != 2:
         print("provide no arguments or pcap_filename argument")
         sys.exit(1)
 
     pktdump = RawPcapWriter(sys.argv[1])
 
-    for packet in ProcessCascade(StraceParser2Packet, ProcessCascade(StraceParser, sys.stdin)) :
+    for packet in ProcessCascade(
+            StraceParser2Packet, ProcessCascade(StraceParser, sys.stdin)):
         pktdump.write(packet)
