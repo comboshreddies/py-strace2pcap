@@ -93,12 +93,14 @@ class StraceParser2Packet():
                 # encode pid to source mac
                 source_mac = self.encode_decimal2mac(c['pid'])
                 # encode fd, operation and session
-                destination_mac = self.encode_decimal2mac(100000000 * self.op_encode[c['syscall']] + c['session'])
+                destination_mac = self.encode_decimal2mac(
+                    100000000 * self.op_encode[c['syscall']] + c['session'])
             else:
                 # encode pid to destination mac
                 destination_mac = self.encode_decimal2mac(c['pid'])
                 # encode fd, operation and session
-                source_mac = self.encode_decimal2mac(100000000 * self.op_encode[c['syscall']] + c['session'])
+                source_mac = self.encode_decimal2mac(
+                    100000000 * self.op_encode[c['syscall']] + c['session'])
             fd_vlan = c['fd']
             if c['protocol'] == "TCP":
                 return self.generate_tcp_packet(source_mac, destination_mac, fd_vlan, c)
