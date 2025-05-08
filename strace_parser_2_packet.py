@@ -15,7 +15,7 @@ class StraceParser2Packet():
     op_encode['recvfrom'] = 5
     op_encode['sendto'] = 6
     op_encode['close'] = 7
- 
+
     def __init__(self):
         self.sequence = {}
 
