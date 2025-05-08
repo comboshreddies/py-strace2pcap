@@ -3,7 +3,9 @@
 
 class FileDescriptorTracker():
     """ pid-fd tracker helper class """
-    fd_track = {}
+
+    def __init__(self):
+        self.fd_track = {}
 
     def start_track(self, key):
         """ start tracking if not tracked """
@@ -26,7 +28,9 @@ class FileDescriptorTracker():
 
 class UnfinishedResume():
     """ keep track of unfinished lines """
-    unfinish_resume = {}
+
+    def __init__(self):
+        self.unfinish_resume = {}
 
     def store_line(self, key, args):
         """ store unfinished line """
@@ -44,8 +48,6 @@ class UnfinishedResume():
 
 class StraceParser():
     """ strace parser class """
-    fd_track = FileDescriptorTracker()
-    syscall_track = UnfinishedResume()
 
     syscalls_all = [
         'sendto', 'recvfrom', 'recvmsg', 'read',
@@ -67,6 +69,10 @@ class StraceParser():
 
     split_cache_packet = {}
     scapy_max_payload = 65480
+
+    def __init__(self):
+        self.fd_track = FileDescriptorTracker()
+        self.syscall_track = UnfinishedResume()
 
     def has_split_cache(self):
         """ checks is there cached packet object """

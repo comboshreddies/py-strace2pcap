@@ -6,6 +6,7 @@ from scapy.all import Ether, Dot1Q, IP, IPv6, TCP, UDP, Raw
 
 class StraceParser2Packet():
     """ Strace Parser to scapy Packet """
+
     op_encode = {}
     op_encode['read'] = 1
     op_encode['write'] = 2
@@ -15,7 +16,8 @@ class StraceParser2Packet():
     op_encode['sendto'] = 6
     op_encode['close'] = 7
 
-    sequence = {}
+    def __init__(self):
+        self.sequence = {}
 
     def has_split_cache(self):
         """ cheks is there split cache, but not implemented so False """
