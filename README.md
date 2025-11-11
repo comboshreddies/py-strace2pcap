@@ -44,6 +44,46 @@ start conversion from strace to pcap
 py_strace2pcap.py file_to_store.pcap < /tmp/straceSample
 ```
 
+## UNIX domain sockets
+
+By default the converter emits the original AF_INET/AF_INET6 packets only.
+Pass `--capture-unix-socket` to synthesise Ethernet/IP/TCP flows for UNIX
+stream sockets. Each inode is mapped to a deterministic 5-tuple
+(`10.0.0.X:ephemeral → 10.0.1.X:50051`) so Wireshark can decode HTTP/2 and
+gRPC traffic. The synthesiser emits a single handshake per flow, keeps FIN/ACK
+pairs in sync with the observed `close()`/`shutdown()`, and buffers writes
+until complete HTTP/2 frames are available. During resynchronisation any stray
+bytes are forwarded as "opaque" TCP payloads so nothing is discarded. Disable
+AF_INET/6 processing with `--no-capture-net` when you only need the UNIX side
+of the conversation.
+
+```console
+py_strace2pcap.py --capture-unix-socket --no-capture-net output.pcap < trace.log
+```
+
+Two optional seeders help Wireshark recover missing protocol prefaces when the
+capture starts mid-stream:
+
+* `--seed-http2` injects the HTTP/2 client preface and minimal SETTINGS/ACK
+  frames before the first payload so Wireshark enables the HTTP/2 dissector
+  automatically.
+* `--seed-grpc` (requires `--seed-http2`) adds a placeholder gRPC HEADERS frame
+  once real traffic provides evidence (HTTP/2 DATA frames with the gRPC
+  five-byte prefix or HEADERS mentioning `content-type: application/grpc`).
+
+All synthesised TCP segments carry valid IPv4/TCP checksums. Per-direction byte
+accounting is logged to confirm that the emitted payload matches the strace
+return values.
+
+## Link-layer options
+
+When UNIX TCP synthesis is enabled the converter always writes Ethernet frames
+(DLT_EN10MB) so both UNIX and INET traffic share the same link-layer without
+needing extra flags.
+
+TLS-encrypted payloads remain opaque because the plaintext is not available in
+the strace logs.
+
 # play with your pcap
 read network traffic from strace with wireshark, tshark, or tcpdump
 ```console

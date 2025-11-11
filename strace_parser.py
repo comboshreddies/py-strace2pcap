@@ -1,5 +1,7 @@
 """ strace -o /tmp/<file> -f -yy -ttt -xx -T parser """
 
+import re
+
 
 class FileDescriptorTracker():
     """ pid-fd tracker helper class """
@@ -52,9 +54,10 @@ class StraceParser():
     syscalls_all = [
         'sendto', 'recvfrom', 'recvmsg', 'read',
         'write', 'sendmsg', 'close', 'shutdown']
-    protocols = ['TCP', 'UDP', 'TCPv6', 'UDPv6']
+    protocols = ['TCP', 'UDP', 'TCPv6', 'UDPv6', 'UNIX', 'UNIX-STREAM', 'UNIX-DGRAM']
     protocols_ipv6 = ['TCPv6', 'UDPv6']
     protocols_ipv4 = ['TCP', 'UDP']
+    protocols_unix = ['UNIX', 'UNIX-STREAM', 'UNIX-DGRAM']
 
     syscalls_format = {}
     syscalls_format['single_chunk_payload'] = ['sendto', 'recvfrom', 'read', 'write']
@@ -259,15 +262,39 @@ class StraceParser():
         return [second_ip, second_port, first_ip, first_port]
 
     def bytes_code_payload(self, line_payload):
-        """ convert payload to bytes code """
-        # strace hex code \xab to 0xab
-        hex_payload = ",0x".join(line_payload.split('\\x'))[1:]
-        # from 0xAB coded payload, create bytes stored payload
-        p = []
-        for i in hex_payload.split(','):
-            if i:
-                p.append(int(i, 16))
-        return bytes(p)
+        r"""Convert payload to bytes, ignoring malformed hex escapes.
+
+        strace with the ``-xx`` flag emits payload bytes as ``\xHH``
+        sequences.  Occasionally, we encounter truncated escapes like
+        ``\x`` without any hex digits (for example when the output is
+        cut short).  The previous implementation tried to split the
+        string manually which resulted in ``int('0x', 16)`` raising a
+        ``ValueError`` when such a malformed escape was present.  We
+        now use a regular expression to extract only well-formed
+        ``\xHH`` sequences and ignore the malformed ones so that the
+        parser can continue processing the trace.
+        """
+
+        hex_bytes = re.findall(r"\\x([0-9a-fA-F]{2})", line_payload)
+        return bytes(int(byte, 16) for byte in hex_bytes)
+
+    def _extract_result(self, unified_line):
+        """Return the syscall result (retval) or None."""
+        if ' = ' not in unified_line:
+            return None
+        tail = unified_line.rsplit(' = ', 1)[1]
+        value = tail.split(' ', 1)[0]
+        try:
+            return int(value)
+        except ValueError:
+            return None
+
+    def _extract_inode(self, annotation):
+        """Extract inode value from fd annotation if present."""
+        if '[' not in annotation or ']' not in annotation:
+            return None
+        candidate = annotation.split('[')[1].split(']')[0]
+        return int(candidate) if candidate.isdigit() else None
 
     def parse_strace_line(self, strace_line):
         """ decode strace line to a structure, or return False """
@@ -280,12 +307,15 @@ class StraceParser():
         args = unified_line.split(' ')
 
         if len(args[2].split('<')) > 1:
-            parsed['protocol'] = args[2].split('<')[1].split(':')[0]
+            fd_annotation = args[2].split('<')[1].split('>')[0]
+            parsed['protocol'] = fd_annotation.split(':')[0]
         else:
             return False
 
         parsed['pid'] = int(args[0])
         parsed['syscall'] = args[2].split('(')[0]
+
+        parsed['result'] = self._extract_result(unified_line)
 
         if parsed['syscall'] in self.syscalls_out:
             parsed['direction_out'] = True
@@ -293,10 +323,48 @@ class StraceParser():
             parsed['direction_out'] = False
 
         parsed['fd'] = int(args[2].split('(')[1].split('<')[0])
-        parsed['time'] = args[1]
+        try:
+            parsed['time'] = float(args[1])
+        except ValueError:
+            parsed['time'] = 0.0
+
+        # start tracking first occurrence of pid-fd pair
+        track_key = f"{parsed['pid']}-{parsed['fd']}"
+        self.fd_track.start_track(track_key)
+
+        # if syscall is close, fd is closed, incrase fd_track for pid-fd key
+        if parsed['syscall'] in self.syscalls_format['state']:
+            self.fd_track.increase(track_key)
+            if parsed['protocol'] in self.protocols_unix:
+                parsed['session'] = self.fd_track.get(track_key)
+                parsed['payload'] = b''
+                parsed['inode'] = self._extract_inode(fd_annotation)
+                return parsed
+            return False
+
+        # TCP session unique number, ie count of different connections with same pair pid-fd
+        parsed['session'] = self.fd_track.get(track_key)
+
+        payload = self.get_payload_chunk(parsed['syscall'], args)
+
+        full_payload = self.bytes_code_payload(payload)
+        if isinstance(parsed['result'], int):
+            emit_len = parsed['result']
+            if emit_len < 0:
+                emit_len = 0
+            if emit_len < len(full_payload):
+                full_payload = full_payload[:emit_len]
+        if len(full_payload) > self.scapy_max_payload:
+            parsed['payload'] = full_payload[:self.scapy_max_payload]
+            self.split_cache_packet = dict(parsed)
+            self.split_cache_packet['payload'] = full_payload[self.scapy_max_payload:]
+        else:
+            parsed['payload'] = full_payload
+        if parsed['protocol'] in self.protocols_unix:
+            parsed['inode'] = self._extract_inode(fd_annotation)
+            return parsed
 
         # parase ip address encoded in strace fd argument
-        # net_info = args[2].split('[')[1].split(']')[-1]
         net_info = ']'.join('['.join(args[2].split('[')[1:]).split(']')[0:-1])
 
         net_parse = False
@@ -311,32 +379,6 @@ class StraceParser():
         (parsed['source_ip'], parsed['source_port'], parsed['destination_ip'],
             parsed['destination_port']) = net_parse
 
-        # start tracking first occurrence of pid-fd pair
-        track_key = f"{parsed['pid']}-{parsed['fd']}"
-        self.fd_track.start_track(track_key)
-
-        # if syscall is close, fd is closed, incrase fd_track for pid-fd key
-        if parsed['syscall'] in self.syscalls_format['state']:
-            self.fd_track.increase(track_key)
-            # recollect partially coded udp
-            # if ':[' in args[2] and not '->' in args[2]:
-            #    src_tcpip = args[2].split('[')[1].split(']')[0]
-            #    src_port = src_tcpip.split(':')[1]
-            #    src_addr = src_tcpip.split(':')[0]
-            return False
-
-        # TCP session unique number, ie count of different connections with same pair pid-fd
-        parsed['session'] = self.fd_track.get(track_key)
-
-        payload = self.get_payload_chunk(parsed['syscall'], args)
-
-        full_payload = self.bytes_code_payload(payload)
-        if len(full_payload) > self.scapy_max_payload:
-            parsed['payload'] = full_payload[:self.scapy_max_payload]
-            self.split_cache_packet = dict(parsed)
-            self.split_cache_packet['payload'] = full_payload[self.scapy_max_payload:]
-        else:
-            parsed['payload'] = full_payload
         return parsed
 
     def process(self, pline):
