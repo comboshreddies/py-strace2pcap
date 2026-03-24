@@ -356,10 +356,9 @@ class StraceParser():
                 full_payload = full_payload[:emit_len]
         if len(full_payload) > self.scapy_max_payload:
             parsed['payload'] = full_payload[:self.scapy_max_payload]
-            self.split_cache_packet = dict(parsed)
-            self.split_cache_packet['payload'] = full_payload[self.scapy_max_payload:]
         else:
             parsed['payload'] = full_payload
+
         if parsed['protocol'] in self.protocols_unix:
             parsed['inode'] = self._extract_inode(fd_annotation)
             return parsed
@@ -378,6 +377,10 @@ class StraceParser():
 
         (parsed['source_ip'], parsed['source_port'], parsed['destination_ip'],
             parsed['destination_port']) = net_parse
+
+        if len(full_payload) > self.scapy_max_payload:
+            self.split_cache_packet = dict(parsed)
+            self.split_cache_packet['payload'] = full_payload[self.scapy_max_payload:]
 
         return parsed
 
